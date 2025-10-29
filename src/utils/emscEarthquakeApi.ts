@@ -22,7 +22,7 @@ interface EMSCResponse {
 
 // EMSC (European-Mediterranean Seismological Centre) API
 // Updated to get last 24 hours of data with magnitude >= 2.0
-export const EMSC_API_URL = 'https://www.seismicportal.eu/fdsnws/event/1/query?limit=1000&start=NOW-24HOURS&minmag=2.0&format=json';
+export const EMSC_API_URL = '/api/emsc';
 
 // Function to fetch earthquake data from EMSC
 export const fetchEarthquakesEMSC = async (): Promise<Earthquake[]> => {
