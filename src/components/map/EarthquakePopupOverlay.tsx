@@ -24,15 +24,17 @@ const EarthquakePopupOverlay: React.FC<Props> = ({ earthquake, onClose, map }) =
       try {
         const [lon, lat] = earthquake.coordinates;
         const point = map.latLngToContainerPoint(L.latLng(lat, lon));
-        const rect = (map.getContainer() as HTMLElement).getBoundingClientRect();
-        // initial raw position in viewport coordinates
-        const rawLeft = rect.left + point.x;
-        const rawTop = rect.top + point.y;
+        const mapContainer = map.getContainer() as HTMLElement;
+        const rect = mapContainer.getBoundingClientRect();
+        
+        // Use position relative to map container
+        const rawLeft = point.x;
+        const rawTop = point.y;
 
-        // If we have a measured popup, clamp to viewport so it never overflows horizontally or vertically
+        // If we have a measured popup, clamp to map bounds
         const margin = 8; // px
-        const vw = window.innerWidth;
-        const vh = window.innerHeight;
+        const mapWidth = mapContainer.clientWidth;
+        const mapHeight = mapContainer.clientHeight;
 
         let left = rawLeft;
         let top = rawTop;
@@ -44,20 +46,20 @@ const EarthquakePopupOverlay: React.FC<Props> = ({ earthquake, onClose, map }) =
           const ph = popupRect.height;
 
           // prefer showing above the marker if it would overflow below
-          if (rawTop + ph + margin > vh) {
+          if (rawTop + ph + margin > mapHeight) {
             top = Math.max(margin, rawTop - ph - 12);
           }
 
-            // compute center-anchored left and clamp so popup (when translated -50%) stays inside viewport
-            const halfW = pw / 2;
-            const minCenter = margin + halfW;
-            const maxCenter = vw - margin - halfW;
-            // rawLeft is the center point (marker x)
-            const centered = Math.min(maxCenter, Math.max(minCenter, rawLeft));
-            left = centered;
+          // compute center-anchored left and clamp so popup stays inside map
+          const halfW = pw / 2;
+          const minCenter = margin + halfW;
+          const maxCenter = mapWidth - margin - halfW;
+          // rawLeft is the center point (marker x)
+          const centered = Math.min(maxCenter, Math.max(minCenter, rawLeft));
+          left = centered;
 
             // If the popup would still be partly offscreen, pan the map so the popup becomes visible.
-            // Compute popup edges in viewport coords (after centering)
+            // Compute popup edges in map container coords (after centering)
             const leftEdge = left - pw / 2;
             const rightEdge = left + pw / 2;
             const topEdge = top;
@@ -72,8 +74,8 @@ const EarthquakePopupOverlay: React.FC<Props> = ({ earthquake, onClose, map }) =
               const dx = margin - leftEdge;
               newCenterPoint.x -= dx; // pan left so content moves right
               needPan = true;
-            } else if (rightEdge > vw - margin) {
-              const dx = rightEdge - (vw - margin);
+            } else if (rightEdge > mapWidth - margin) {
+              const dx = rightEdge - (mapWidth - margin);
               newCenterPoint.x += dx; // pan right so content moves left
               needPan = true;
             }
@@ -82,8 +84,8 @@ const EarthquakePopupOverlay: React.FC<Props> = ({ earthquake, onClose, map }) =
               const dy = margin - topEdge;
               newCenterPoint.y -= dy; // pan up so content moves down
               needPan = true;
-            } else if (bottomEdge > vh - margin) {
-              const dy = bottomEdge - (vh - margin);
+            } else if (bottomEdge > mapHeight - margin) {
+              const dy = bottomEdge - (mapHeight - margin);
               newCenterPoint.y += dy; // pan down so content moves up
               needPan = true;
             }
@@ -137,8 +139,8 @@ const EarthquakePopupOverlay: React.FC<Props> = ({ earthquake, onClose, map }) =
     return (
     <div
       ref={popupRef}
-      style={{ position: 'fixed', left: pos.left, top: pos.top, zIndex: 60, transform: 'translateX(-50%)' }}
-      className="max-w-sm w-11/12 sm:w-80 bg-background border rounded-md shadow-lg p-3"
+      style={{ position: 'absolute', left: pos.left, top: pos.top, zIndex: 60, transform: 'translateX(-50%)' }}
+      className="max-w-[90%] w-60 bg-background border rounded-md shadow-lg p-2 text-xs sm:text-sm"
     >
       <div className="flex justify-between items-start">
         <div>
