@@ -48,11 +48,13 @@ const EarthquakePopupOverlay: React.FC<Props> = ({ earthquake, onClose, map }) =
             top = Math.max(margin, rawTop - ph - 12);
           }
 
-          // clamp horizontally
-          if (rawLeft + pw + margin > vw) {
-            left = Math.max(margin, vw - pw - margin);
-          }
-          if (left < margin) left = margin;
+            // compute center-anchored left and clamp so popup (when translated -50%) stays inside viewport
+            const halfW = pw / 2;
+            const minCenter = margin + halfW;
+            const maxCenter = vw - margin - halfW;
+            // rawLeft is the center point (marker x)
+            const centered = Math.min(maxCenter, Math.max(minCenter, rawLeft));
+            left = centered;
         }
 
         setPos({ left, top });
@@ -91,10 +93,10 @@ const EarthquakePopupOverlay: React.FC<Props> = ({ earthquake, onClose, map }) =
 
   if (!earthquake || !pos || !visible) return null;
 
-  return (
+    return (
     <div
       ref={popupRef}
-      style={{ position: 'fixed', left: pos.left, top: pos.top, zIndex: 60 }}
+      style={{ position: 'fixed', left: pos.left, top: pos.top, zIndex: 60, transform: 'translateX(-50%)' }}
       className="max-w-sm w-11/12 sm:w-80 bg-background border rounded-md shadow-lg p-3"
     >
       <div className="flex justify-between items-start">

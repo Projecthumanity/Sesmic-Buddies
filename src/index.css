@@ -5,6 +5,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent horizontal page expansion caused by offscreen elements (popups, etc.) */
+html, body {
+  overflow-x: hidden;
+}
+
 @layer base {
   :root {
     --background: 210 20% 98%;
