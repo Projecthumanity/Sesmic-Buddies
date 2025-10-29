@@ -112,6 +112,9 @@
 }
 
 @layer base {
+  /* Ensure predictable sizing on mobile devices */
+  html { box-sizing: border-box; }
+  *, *::before, *::after { box-sizing: inherit; }
   * {
     @apply border-border;
   }

@@ -73,7 +73,7 @@ const EarthquakeMap: React.FC<EarthquakeMapProps> = ({
   }
   
   return (
-  <div className="relative w-full h-[calc(min(500px,_70vh))] rounded-xl overflow-hidden shadow-md border animate-fade-in">
+  <div className="relative w-full h-[min(70vh,500px)] rounded-xl overflow-hidden shadow-md border animate-fade-in">
       {!mapLoaded && (
         <div className="absolute inset-0 flex items-center justify-center bg-card z-10">
           <div className="text-center space-y-2">

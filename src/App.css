@@ -1,7 +1,8 @@
 #root {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
+  /* Responsive padding to avoid horizontal overflow on small screens */
+  padding: clamp(0.75rem, 3vw, 2rem);
   text-align: center;
 }
 
