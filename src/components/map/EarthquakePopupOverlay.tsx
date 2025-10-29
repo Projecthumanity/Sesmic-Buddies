@@ -55,6 +55,47 @@ const EarthquakePopupOverlay: React.FC<Props> = ({ earthquake, onClose, map }) =
             // rawLeft is the center point (marker x)
             const centered = Math.min(maxCenter, Math.max(minCenter, rawLeft));
             left = centered;
+
+            // If the popup would still be partly offscreen, pan the map so the popup becomes visible.
+            // Compute popup edges in viewport coords (after centering)
+            const leftEdge = left - pw / 2;
+            const rightEdge = left + pw / 2;
+            const topEdge = top;
+            const bottomEdge = top + ph;
+
+            let needPan = false;
+            const currentCenter = map.getCenter();
+            const centerPoint = map.latLngToContainerPoint(currentCenter);
+            const newCenterPoint = centerPoint.clone();
+
+            if (leftEdge < margin) {
+              const dx = margin - leftEdge;
+              newCenterPoint.x -= dx; // pan left so content moves right
+              needPan = true;
+            } else if (rightEdge > vw - margin) {
+              const dx = rightEdge - (vw - margin);
+              newCenterPoint.x += dx; // pan right so content moves left
+              needPan = true;
+            }
+
+            if (topEdge < margin) {
+              const dy = margin - topEdge;
+              newCenterPoint.y -= dy; // pan up so content moves down
+              needPan = true;
+            } else if (bottomEdge > vh - margin) {
+              const dy = bottomEdge - (vh - margin);
+              newCenterPoint.y += dy; // pan down so content moves up
+              needPan = true;
+            }
+
+            if (needPan) {
+              try {
+                const latlng = map.containerPointToLatLng(newCenterPoint);
+                map.panTo(latlng, { animate: true });
+              } catch (err) {
+                // ignore pan errors
+              }
+            }
         }
 
         setPos({ left, top });
