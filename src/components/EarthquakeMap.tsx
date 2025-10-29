@@ -61,6 +61,17 @@ const EarthquakeMap: React.FC<EarthquakeMapProps> = ({
     
     return () => clearTimeout(timer);
   }, []);
+
+  // Disable map zoom interactions on mobile
+  useEffect(() => {
+    if (mapInstance && L.Browser.mobile) {
+      mapInstance.touchZoom.disable();
+      mapInstance.doubleClickZoom.disable();
+      mapInstance.scrollWheelZoom.disable();
+      mapInstance.boxZoom.disable();
+      mapInstance.keyboard.disable();
+    }
+  }, [mapInstance]);
   
   if (mapError) {
     return (
@@ -91,9 +102,12 @@ const EarthquakeMap: React.FC<EarthquakeMapProps> = ({
         zoomControl={true}
         scrollWheelZoom={false}
         doubleClickZoom={false}
-        touchZoom={false}
-        tap={false}
-        whenReady={() => setMapLoaded(true)}
+        whenReady={() => {
+          setMapLoaded(true);
+          if (L.Browser.mobile) {
+            mapInstance?.dragging.disable();
+          }
+        }}
       >
         {/* helper inside MapContainer to expose map instance to parent */}
         <MapSetter onCreate={(m) => setMapInstance(m)} />
