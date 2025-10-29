@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Earthquake } from '@/utils/earthquakeApi';
 import L from 'leaflet';
 
@@ -11,6 +11,7 @@ interface Props {
 const EarthquakePopupOverlay: React.FC<Props> = ({ earthquake, onClose, map }) => {
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
   const [visible, setVisible] = useState(false);
+  const popupRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!earthquake || !map) {
@@ -24,7 +25,37 @@ const EarthquakePopupOverlay: React.FC<Props> = ({ earthquake, onClose, map }) =
         const [lon, lat] = earthquake.coordinates;
         const point = map.latLngToContainerPoint(L.latLng(lat, lon));
         const rect = (map.getContainer() as HTMLElement).getBoundingClientRect();
-        setPos({ left: rect.left + point.x, top: rect.top + point.y });
+        // initial raw position in viewport coordinates
+        const rawLeft = rect.left + point.x;
+        const rawTop = rect.top + point.y;
+
+        // If we have a measured popup, clamp to viewport so it never overflows horizontally or vertically
+        const margin = 8; // px
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+
+        let left = rawLeft;
+        let top = rawTop;
+
+        const popupEl = popupRef.current;
+        if (popupEl) {
+          const popupRect = popupEl.getBoundingClientRect();
+          const pw = popupRect.width;
+          const ph = popupRect.height;
+
+          // prefer showing above the marker if it would overflow below
+          if (rawTop + ph + margin > vh) {
+            top = Math.max(margin, rawTop - ph - 12);
+          }
+
+          // clamp horizontally
+          if (rawLeft + pw + margin > vw) {
+            left = Math.max(margin, vw - pw - margin);
+          }
+          if (left < margin) left = margin;
+        }
+
+        setPos({ left, top });
       } catch (e) {
         setPos(null);
       }
@@ -33,7 +64,9 @@ const EarthquakePopupOverlay: React.FC<Props> = ({ earthquake, onClose, map }) =
     // Wait for moveend to show overlay so it doesn't fight map autopan
     const showAfterMove = () => {
       updatePosition();
+      // allow measurement after render
       setVisible(true);
+      setTimeout(updatePosition, 50);
     };
 
   map.once('moveend', showAfterMove);
@@ -44,8 +77,8 @@ const EarthquakePopupOverlay: React.FC<Props> = ({ earthquake, onClose, map }) =
   map.on('zoom', updatePosition);
   window.addEventListener('resize', updatePosition);
 
-    // initial position
-    updatePosition();
+  // initial position
+  updatePosition();
 
     return () => {
       map.off('move', updatePosition);
@@ -60,8 +93,9 @@ const EarthquakePopupOverlay: React.FC<Props> = ({ earthquake, onClose, map }) =
 
   return (
     <div
+      ref={popupRef}
       style={{ position: 'fixed', left: pos.left, top: pos.top, zIndex: 60 }}
-      className="max-w-sm w-80 bg-background border rounded-md shadow-lg p-3"
+      className="max-w-sm w-11/12 sm:w-80 bg-background border rounded-md shadow-lg p-3"
     >
       <div className="flex justify-between items-start">
         <div>
