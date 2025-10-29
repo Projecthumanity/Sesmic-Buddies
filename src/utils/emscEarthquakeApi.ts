@@ -33,13 +33,32 @@ export const fetchEarthquakesEMSC = async (): Promise<Earthquake[]> => {
       },
       signal: AbortSignal.timeout(15000) // 15 seconds timeout
     });
-    
+
     if (!response.ok) {
       console.warn(`Failed to fetch EMSC earthquake data: ${response.status}`);
+      // Attempt to capture body for debugging
+      try {
+        const text = await response.text();
+        console.warn('EMSC response body (non-OK):', text.slice(0, 512));
+      } catch (e) {
+        // ignore
+      }
       return [];
     }
-    
-    const data = await response.json();
+
+    let data: EMSCResponse | null = null;
+    try {
+      data = (await response.json()) as EMSCResponse;
+    } catch (err) {
+      // If parsing fails, capture text for debugging (helps diagnose if an HTML/JS bundle was returned)
+      try {
+        const text = await response.text();
+        console.error('Error parsing EMSC JSON response. First 1k chars of response:', text.slice(0, 1000));
+      } catch (e) {
+        console.error('Error reading EMSC response body for debugging', e);
+      }
+      throw new Error('Invalid JSON response from EMSC proxy');
+    }
     
     if (!data || !data.features || !Array.isArray(data.features)) {
       console.warn("Invalid data structure from EMSC API");
