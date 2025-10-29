@@ -89,8 +89,10 @@ const EarthquakeMap: React.FC<EarthquakeMapProps> = ({
         zoom={2}
         attributionControl={false}
         zoomControl={true}
-        scrollWheelZoom={true}
-        doubleClickZoom={true}
+        scrollWheelZoom={false}
+        doubleClickZoom={false}
+        touchZoom={false}
+        tap={false}
         whenReady={() => setMapLoaded(true)}
       >
         {/* helper inside MapContainer to expose map instance to parent */}
